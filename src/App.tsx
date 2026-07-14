@@ -7,9 +7,12 @@ import React, {
 } from 'react';
 import {
   Brush,
+  Camera,
+  ChevronLeft,
   ChevronRight,
   Gift,
   Heart,
+  Images,
   Instagram,
   Mail,
   Menu,
@@ -50,6 +53,118 @@ const SERVICE_OPTIONS = [
   'Custom Favours & Treats',
   'Professional Face Painting',
 ] as const;
+
+type GalleryCategory = 'All' | 'Favours' | 'Treats' | 'Face Painting';
+
+type GalleryItem = {
+  id: string;
+  title: string;
+  category: Exclude<GalleryCategory, 'All'>;
+  description: string;
+  image: string;
+  alt: string;
+  layout: string;
+};
+
+const GALLERY_CATEGORIES: GalleryCategory[] = [
+  'All',
+  'Favours',
+  'Treats',
+  'Face Painting',
+];
+
+// Replace these placeholder images with Art Haus Shan's real event photos later.
+// Keep the same object structure and update only image, alt, title, and description.
+const GALLERY_ITEMS: GalleryItem[] = [
+  {
+    id: 'celebration-favours',
+    title: 'Celebration Favours',
+    category: 'Favours',
+    description:
+      'Personalized keepsakes coordinated with the colours and style of the event.',
+    image:
+      'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=88',
+    alt: 'Colourful party decorations arranged for a celebration',
+    layout: 'lg:col-span-7 lg:row-span-2',
+  },
+  {
+    id: 'custom-cupcakes',
+    title: 'Custom Cupcakes',
+    category: 'Treats',
+    description:
+      'Beautifully presented treats designed to feel like part of the celebration decor.',
+    image:
+      'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=88',
+    alt: 'Decorated cupcakes prepared for a special event',
+    layout: 'lg:col-span-5',
+  },
+  {
+    id: 'creative-face-paint',
+    title: 'Creative Face Painting',
+    category: 'Face Painting',
+    description:
+      'Colourful, guest-friendly designs created with professional skin-safe products.',
+    image:
+      'https://images.unsplash.com/photo-1596443423588-349f485db1f9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=88',
+    alt: 'A face painter creating a colourful design',
+    layout: 'lg:col-span-5',
+  },
+  {
+    id: 'dessert-details',
+    title: 'Dessert Details',
+    category: 'Treats',
+    description:
+      'Small details, coordinated finishes, and polished presentation for memorable tables.',
+    image:
+      'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=88',
+    alt: 'Fresh baked treats presented for guests',
+    layout: 'lg:col-span-4',
+  },
+  {
+    id: 'party-table',
+    title: 'Party Table Styling',
+    category: 'Favours',
+    description:
+      'A coordinated setup that brings favours, treats, and theme colours together.',
+    image:
+      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=88',
+    alt: 'A colourful event setup with decorative lighting',
+    layout: 'lg:col-span-4',
+  },
+  {
+    id: 'painted-moments',
+    title: 'Painted Moments',
+    category: 'Face Painting',
+    description:
+      'Playful designs that give guests an interactive experience to remember.',
+    image:
+      'https://images.unsplash.com/photo-1607453998774-d533f65dac99?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=88',
+    alt: 'Bright artistic colours and painting materials',
+    layout: 'lg:col-span-4',
+  },
+  {
+    id: 'sweet-celebration',
+    title: 'Sweet Celebration',
+    category: 'Treats',
+    description:
+      'A cheerful collection of treats prepared to match the mood of the occasion.',
+    image:
+      'https://images.unsplash.com/photo-1464349153735-7db50ed83c84?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=88',
+    alt: 'Colourful sweets arranged for a party',
+    layout: 'lg:col-span-5',
+  },
+  {
+    id: 'finishing-touches',
+    title: 'Finishing Touches',
+    category: 'Favours',
+    description:
+      'Thoughtful take-home details that make the celebration feel complete.',
+    image:
+      'https://images.unsplash.com/photo-1513151233558-d860c5398176?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=88',
+    alt: 'Colourful celebration decorations and gift details',
+    layout: 'lg:col-span-7',
+  },
+];
 
 function usePrefersReducedMotion() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -128,6 +243,10 @@ export default function App() {
   const [formStatus, setFormStatus] = useState<FormStatus>('idle');
   const [serviceInterest, setServiceInterest] =
     useState<(typeof SERVICE_OPTIONS)[number]>('Both Services');
+  const [galleryFilter, setGalleryFilter] =
+    useState<GalleryCategory>('All');
+  const [selectedGalleryItemId, setSelectedGalleryItemId] =
+    useState<string | null>(null);
 
   const [heroRef, isHeroVisible] = useIntersectionObserver({ threshold: 0.1 });
   const [aboutRef, isAboutVisible] = useIntersectionObserver({ threshold: 0.18 });
@@ -137,8 +256,30 @@ export default function App() {
     useIntersectionObserver({ threshold: 0.18 });
   const [service2Ref, isService2Visible] =
     useIntersectionObserver({ threshold: 0.18 });
+  const [galleryRef, isGalleryVisible] =
+    useIntersectionObserver({ threshold: 0.1 });
   const [contactRef, isContactVisible] =
     useIntersectionObserver({ threshold: 0.1 });
+
+  const filteredGalleryItems = useMemo(
+    () =>
+      galleryFilter === 'All'
+        ? GALLERY_ITEMS
+        : GALLERY_ITEMS.filter((item) => item.category === galleryFilter),
+    [galleryFilter],
+  );
+
+  const selectedGalleryItem = useMemo(
+    () =>
+      GALLERY_ITEMS.find((item) => item.id === selectedGalleryItemId) ?? null,
+    [selectedGalleryItemId],
+  );
+
+  const selectedGalleryIndex = selectedGalleryItem
+    ? filteredGalleryItems.findIndex(
+        (item) => item.id === selectedGalleryItem.id,
+      )
+    : -1;
 
   const minimumEventDate = useMemo(
     () => new Date().toISOString().split('T')[0],
@@ -162,17 +303,39 @@ export default function App() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsMobileMenuOpen(false);
+        setSelectedGalleryItemId(null);
+      }
+
+      if (!selectedGalleryItem || filteredGalleryItems.length < 2) return;
+
+      if (event.key === 'ArrowRight') {
+        const nextIndex =
+          (selectedGalleryIndex + 1) % filteredGalleryItems.length;
+        setSelectedGalleryItemId(filteredGalleryItems[nextIndex].id);
+      }
+
+      if (event.key === 'ArrowLeft') {
+        const previousIndex =
+          (selectedGalleryIndex - 1 + filteredGalleryItems.length) %
+          filteredGalleryItems.length;
+        setSelectedGalleryItemId(filteredGalleryItems[previousIndex].id);
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = isMobileMenuOpen ? 'hidden' : '';
+    document.body.style.overflow =
+      isMobileMenuOpen || selectedGalleryItem ? 'hidden' : '';
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isMobileMenuOpen]);
+  }, [
+    filteredGalleryItems,
+    isMobileMenuOpen,
+    selectedGalleryIndex,
+    selectedGalleryItem,
+  ]);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -181,6 +344,25 @@ export default function App() {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       setIsMobileMenuOpen(false);
     }
+  };
+
+  const showPreviousGalleryItem = () => {
+    if (!selectedGalleryItem || filteredGalleryItems.length < 2) return;
+
+    const previousIndex =
+      (selectedGalleryIndex - 1 + filteredGalleryItems.length) %
+      filteredGalleryItems.length;
+
+    setSelectedGalleryItemId(filteredGalleryItems[previousIndex].id);
+  };
+
+  const showNextGalleryItem = () => {
+    if (!selectedGalleryItem || filteredGalleryItems.length < 2) return;
+
+    const nextIndex =
+      (selectedGalleryIndex + 1) % filteredGalleryItems.length;
+
+    setSelectedGalleryItemId(filteredGalleryItems[nextIndex].id);
   };
 
   const chooseServiceAndScroll = (
@@ -227,7 +409,7 @@ export default function App() {
       ? 'opacity-100 translate-y-0'
       : 'opacity-0 translate-y-8 motion-reduce:opacity-100 motion-reduce:translate-y-0';
 
-  const navItems = ['Home', 'About', 'Services', 'Contact'];
+  const navItems = ['Home', 'About', 'Services', 'Gallery', 'Contact'];
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#fbfaf8] font-sans text-stone-800 selection:bg-pink-200 selection:text-pink-950">
@@ -442,6 +624,49 @@ export default function App() {
                 >
                   Get a Quote
                 </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section
+          aria-label="Art Haus Shan service highlights"
+          className="relative z-10 border-y border-stone-800 bg-stone-950 py-5 text-white"
+        >
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-3 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-center gap-3 text-center sm:justify-start sm:text-left">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-pink-500/15 text-pink-300">
+                <Sparkles size={19} aria-hidden="true" />
+              </span>
+              <div>
+                <p className="font-black">Made for Your Theme</p>
+                <p className="text-xs font-medium text-stone-400">
+                  Thoughtful custom details
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 border-stone-800 text-center sm:border-x sm:px-6 sm:text-left">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-300">
+                <Palette size={19} aria-hidden="true" />
+              </span>
+              <div>
+                <p className="font-black">Professional Quality</p>
+                <p className="text-xs font-medium text-stone-400">
+                  Polished and event-ready
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 text-center sm:justify-end sm:text-left">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-500/15 text-purple-300">
+                <Heart size={19} fill="currentColor" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="font-black">Created with Care</p>
+                <p className="text-xs font-medium text-stone-400">
+                  Memorable guest experiences
+                </p>
               </div>
             </div>
           </div>
@@ -668,6 +893,145 @@ export default function App() {
                   <ChevronRight size={18} className="ml-1.5" aria-hidden="true" />
                 </button>
               </article>
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="gallery"
+          ref={galleryRef}
+          className="relative scroll-mt-20 overflow-hidden bg-white py-24"
+        >
+          <div
+            aria-hidden="true"
+            className="absolute -left-24 top-24 h-72 w-72 rounded-full bg-pink-100/60 blur-3xl"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute -right-24 bottom-16 h-80 w-80 rounded-full bg-cyan-100/60 blur-3xl"
+          />
+
+          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div
+              className={`mb-12 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between ${fadeUpClass} ${getVisibleClass(
+                isGalleryVisible,
+              )}`}
+            >
+              <div className="max-w-3xl">
+                <div className="mb-4 flex items-center gap-2">
+                  <Images
+                    size={20}
+                    className="text-pink-500"
+                    aria-hidden="true"
+                  />
+                  <h2 className="text-sm font-bold uppercase tracking-[0.18em] text-pink-500">
+                    The Art Haus Experience
+                  </h2>
+                </div>
+
+                <h3 className="mb-5 text-4xl font-black leading-tight text-stone-950 md:text-5xl">
+                  Creative details that become{' '}
+                  <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-transparent">
+                    unforgettable moments.
+                  </span>
+                </h3>
+
+                <p className="max-w-2xl text-lg font-medium leading-relaxed text-stone-600">
+                  Explore a sample of the colour, personality, and thoughtful
+                  presentation that can be brought to your celebration.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => scrollToSection('contact')}
+                className="group inline-flex w-full items-center justify-center rounded-full bg-stone-950 px-7 py-3.5 font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-pink-600 hover:shadow-pink-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-4 motion-reduce:transform-none sm:w-auto"
+              >
+                Create Something Special
+                <ChevronRight
+                  size={19}
+                  className="ml-2 transition-transform group-hover:translate-x-1"
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+
+            <div
+              className={`mb-8 flex flex-wrap gap-2 ${fadeUpClass} ${getVisibleClass(
+                isGalleryVisible,
+              )} delay-100`}
+              aria-label="Filter gallery"
+            >
+              {GALLERY_CATEGORIES.map((category) => {
+                const isActive = galleryFilter === category;
+
+                return (
+                  <button
+                    type="button"
+                    key={category}
+                    aria-pressed={isActive}
+                    onClick={() => {
+                      setGalleryFilter(category);
+                      setSelectedGalleryItemId(null);
+                    }}
+                    className={`rounded-full border px-5 py-2.5 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 ${
+                      isActive
+                        ? 'border-stone-950 bg-stone-950 text-white shadow-md'
+                        : 'border-stone-200 bg-white text-stone-600 hover:border-pink-300 hover:bg-pink-50 hover:text-pink-700'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              className={`grid auto-rows-[240px] grid-flow-dense grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12 ${fadeUpClass} ${getVisibleClass(
+                isGalleryVisible,
+              )} delay-150`}
+            >
+              {filteredGalleryItems.map((item) => (
+                <button
+                  type="button"
+                  key={item.id}
+                  onClick={() => setSelectedGalleryItemId(item.id)}
+                  aria-label={`Open ${item.title} in gallery viewer`}
+                  className={`group relative min-h-[240px] overflow-hidden rounded-[1.75rem] bg-stone-200 text-left shadow-lg transition duration-500 hover:-translate-y-1 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-pink-400/70 motion-reduce:transform-none ${item.layout}`}
+                >
+                  <img
+                    src={item.image}
+                    alt={item.alt}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transform-none"
+                  />
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/10 to-transparent" />
+
+                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 sm:p-6">
+                    <div>
+                      <span className="mb-2 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-md">
+                        {item.category}
+                      </span>
+                      <h4 className="text-xl font-black text-white sm:text-2xl">
+                        {item.title}
+                      </h4>
+                    </div>
+
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-stone-950 shadow-lg transition-transform duration-300 group-hover:scale-110">
+                      <Camera size={20} aria-hidden="true" />
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-8 rounded-[1.75rem] border border-stone-200 bg-[#fbfaf8] p-6 text-center sm:p-8">
+              <p className="mx-auto max-w-3xl text-lg font-bold leading-relaxed text-stone-700">
+                Every celebration is different. Your final colours, favours,
+                treats, and face-painting options can be customized around your
+                theme, guest list, and vision.
+              </p>
             </div>
           </div>
         </section>
@@ -924,6 +1288,103 @@ export default function App() {
           </div>
         </section>
       </main>
+
+      {selectedGalleryItem && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-stone-950/95 p-4 backdrop-blur-md sm:p-8"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="gallery-dialog-title"
+          onClick={() => setSelectedGalleryItemId(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setSelectedGalleryItemId(null)}
+            aria-label="Close gallery viewer"
+            className="absolute right-4 top-4 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white hover:text-stone-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:right-7 sm:top-7"
+          >
+            <X size={24} aria-hidden="true" />
+          </button>
+
+          {filteredGalleryItems.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  showPreviousGalleryItem();
+                }}
+                aria-label="View previous gallery image"
+                className="absolute left-3 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white hover:text-stone-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:left-7"
+              >
+                <ChevronLeft size={27} aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  showNextGalleryItem();
+                }}
+                aria-label="View next gallery image"
+                className="absolute right-3 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white hover:text-stone-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:right-7"
+              >
+                <ChevronRight size={27} aria-hidden="true" />
+              </button>
+            </>
+          )}
+
+          <div
+            className="relative flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-stone-900 shadow-2xl lg:flex-row"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex min-h-[360px] flex-1 items-center justify-center bg-black lg:min-h-[680px]">
+              <img
+                src={selectedGalleryItem.image}
+                alt={selectedGalleryItem.alt}
+                className="max-h-[68vh] w-full object-contain lg:max-h-[90vh]"
+              />
+            </div>
+
+            <div className="w-full shrink-0 p-6 text-white sm:p-8 lg:w-[360px] lg:p-10">
+              <span className="mb-4 inline-flex rounded-full bg-pink-500/15 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-pink-300">
+                {selectedGalleryItem.category}
+              </span>
+
+              <h3
+                id="gallery-dialog-title"
+                className="mb-4 text-3xl font-black leading-tight"
+              >
+                {selectedGalleryItem.title}
+              </h3>
+
+              <p className="mb-7 font-medium leading-relaxed text-stone-300">
+                {selectedGalleryItem.description}
+              </p>
+
+              <div className="mb-7 h-px bg-white/10" />
+
+              <p className="mb-3 text-sm font-bold uppercase tracking-wider text-stone-500">
+                Gallery image
+              </p>
+              <p className="text-lg font-black">
+                {selectedGalleryIndex + 1} of {filteredGalleryItems.length}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedGalleryItemId(null);
+                  scrollToSection('contact');
+                }}
+                className="mt-8 w-full rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 px-6 py-3.5 font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-pink-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900 motion-reduce:transform-none"
+              >
+                Request a Similar Look
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="border-t border-stone-100 bg-white py-12">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-7 px-4 sm:px-6 md:flex-row lg:px-8">
